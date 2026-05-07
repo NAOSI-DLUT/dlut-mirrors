@@ -1,0 +1,134 @@
+---
+type Mirror = {
+  name: string;
+  is_master: boolean;
+  status: "success" | "syncing" | "failed";
+  last_update: string;
+  last_update_ts: number;
+  last_started: string;
+  last_started_ts: number;
+  last_ended: string;
+  last_ended_ts: number;
+  next_schedule: string;
+  next_schedule_ts: number;
+  upstream: string;
+  size: string;
+  description?: string;
+};
+
+const response = await fetch(new URL("/mirrors.json", Astro.url));
+const mirrors = (await response.json()) as Mirror[];
+
+function getMirrorSlug(name: string) {
+  const slugMap: Record<string, string> = {
+    Ubuntu: "docs/ubuntu",
+    CentOS: "docs/centos",
+    Debian: "docs/debian",
+    Fedora: "docs/fedora",
+    "Arch Linux": "docs/arch-linux",
+    Elvish: "docs/elvish",
+    "Node.js": "docs/nodejs",
+    Python: "docs/python",
+  };
+
+  return (
+    slugMap[name] ||
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+  );
+}
+
+function getStatusBadge(status: string) {
+  const statusMap: Record<string, { color: string; text: string }> = {
+    success: { color: "status-success", text: "完成" },
+    syncing: { color: "status-syncing", text: "同步中" },
+    failed: { color: "status-failed", text: "失败" },
+  };
+  return statusMap[status] || { color: "status-badge", text: "未知" };
+}
+
+function formatDate(dateString: string) {
+  if (!dateString || dateString.includes("0001")) return "-";
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleString("zh-CN");
+  } catch {
+    return dateString;
+  }
+}
+---
+
+<div class="mirror-list">
+  <div class="overflow-x-auto">
+    <table class="border-collapse">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="border border-gray-300 px-4 py-2 text-left">名称</th>
+          <th class="border border-gray-300 px-4 py-2 text-left">描述</th>
+          <th class="border border-gray-300 px-4 py-2 text-center">状态</th>
+          <th class="border border-gray-300 px-4 py-2 text-left">大小</th>
+          <th class="border border-gray-300 px-4 py-2 text-left">最后更新</th>
+          <th class="border border-gray-300 px-4 py-2 text-left">下一次同步</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          mirrors.map((mirror) => {
+            const statusBadge = getStatusBadge(mirror.status);
+            const slug = getMirrorSlug(mirror.name);
+            return (
+              <tr class="hover:bg-gray-50 transition">
+                <td
+                  class="border border-gray-300 px-4 py-2 font-semibold"
+                  data-label="名称"
+                >
+                  {mirror.name}
+                </td>
+                <td
+                  class="border border-gray-300 px-4 py-2 text-sm"
+                  data-label="描述"
+                >
+                  {mirror.description || "-"}
+                </td>
+                <td
+                  class="border border-gray-300 px-4 py-2 text-center"
+                  data-label="状态"
+                >
+                  <span class={`status-badge ${statusBadge.color}`}>
+                    {statusBadge.text}
+                  </span>
+                </td>
+                <td
+                  class="border border-gray-300 px-4 py-2 text-sm"
+                  data-label="大小"
+                >
+                  {mirror.size}
+                </td>
+                <td
+                  class="border border-gray-300 px-4 py-2 text-sm text-gray-600"
+                  data-label="最后更新"
+                >
+                  {formatDate(mirror.last_update)}
+                </td>
+                <td
+                  class="border border-gray-300 px-4 py-2 text-sm text-gray-600"
+                  data-label="下一次同步"
+                >
+                  {formatDate(mirror.next_schedule)}
+                </td>
+              </tr>
+            );
+          })
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .mirror-list {
+    margin: 2rem 0;
+  }
+</style>

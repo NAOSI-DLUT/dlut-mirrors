@@ -1,40 +1,27 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: 大连理工大学开源镜像站
+template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
-  image:
-    file: ../../assets/houston.webp
+  tagline: 稳定、快速、面向校园与开源社区的镜像服务
   actions:
-    - text: Example Guide
-      link: /guides/example/
+    - text: 帮助文档
+      link: /docs/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+    - text: 镜像站博客
+      link: /blog/
       icon: external
       variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Aside } from "@astrojs/starlight/components";
+import MirrorList from "../../components/MirrorList.astro";
 
-## Next steps
+<Aside type="caution">
+  本站仅为技术演示与功能测试之用，并非大连理工大学官方网站或其授权镜像，与该校及其任何下属部门无任何关联。本站所有内容（含文字、数据、服务承诺等）均按“现状”提供，不保证准确性、完整性或时效性，且随时可能变更。用户需自行甄别网站性质，切勿将本站内容视为官方信息或用于生产环境。因访问或使用本站（包括下载任何文件）所导致的任何直接或间接损失（如系统损坏、数据丢失等），相关责任均由用户自行承担，本站及维护者概不负责。请您在充分理解上述风险的前提下使用本站。
+</Aside>
 
-<CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
-	</Card>
-	<Card title="Change page layout" icon="document">
-		Delete `template: splash` in `src/content/docs/index.mdx` to display a
-		sidebar on this page.
-	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
-	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
-	</Card>
-</CardGrid>
+大连理工大学开源镜像站为校内外用户提供常见 Linux 发行版与开发工具镜像服务。
+
+## 镜像列表
+
+<MirrorList />
