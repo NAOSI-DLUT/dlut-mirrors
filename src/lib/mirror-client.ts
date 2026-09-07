@@ -1,77 +1,70 @@
 import {
-  catalog,
-  formatDate,
-  parseMirrors,
-  statusLabel,
+  mirrorMeta,
+  validRepoPath,
   type Mirror,
+  type MirrorFeed,
+  type MirrorMetadata,
 } from './mirrors';
+const metadata: Record<string, MirrorMetadata> = JSON.parse(
+  document.querySelector<HTMLElement>('[data-mirror-docs]')!.dataset
+    .mirrorDocs!,
+);
 const rows = document.querySelector<HTMLTableSectionElement>('#mirror-rows')!;
 const input = document.querySelector<HTMLInputElement>('#mirror-search')!;
-const select = document.querySelector<HTMLSelectElement>('#status-filter')!;
 const message = document.querySelector<HTMLElement>('#feed-message')!;
 const refresh = document.querySelector<HTMLButtonElement>('#refresh')!;
+const buttons = document.querySelectorAll<HTMLButtonElement>('[data-category]');
 let mirrors: Mirror[] | undefined;
 let category = '';
-const buttons = document.querySelectorAll<HTMLButtonElement>('[data-category]');
 function element(tag: string, text: string, className = '') {
   const node = document.createElement(tag);
   node.textContent = text;
   node.className = className;
   return node;
 }
+function link(text: string, href: string) {
+  const a = document.createElement('a');
+  a.textContent = text;
+  a.href = href;
+  a.className = 'docs-link';
+  return a;
+}
 function render() {
   if (!mirrors) return;
   const query = input.value.trim().toLocaleLowerCase();
-  const filtered = mirrors.filter(
-    (m) =>
-      (!category || catalog[m.name]?.category === category) &&
-      (!select.value ||
-        (select.value === 'unknown'
-          ? !['success', 'syncing', 'failed'].includes(m.status)
-          : m.status === select.value)) &&
-      `${m.name} ${m.description}`.toLocaleLowerCase().includes(query),
-  );
+  const filtered = mirrors.filter((m) => {
+    const meta = mirrorMeta(m, metadata);
+    return (
+      (!category || meta.category === category) &&
+      `${m.name} ${meta.label}`.toLowerCase().includes(query)
+    );
+  });
   rows.replaceChildren(
     ...filtered.map((m) => {
-      const meta = catalog[m.name];
+      const meta = mirrorMeta(m, metadata);
       const row = document.createElement('tr');
-      const cells = Array.from({ length: 5 }, () => row.insertCell());
+      const cells = Array.from({ length: 4 }, () => row.insertCell());
       const name = element('div', '', 'mirror-name');
-      const icon = element(
-        'span',
-        meta?.mark ?? m.name.slice(0, 1),
-        'mirror-icon',
-      );
-      icon.style.setProperty('--icon-color', meta?.color ?? '#587f6d');
+      const icon = element('span', meta.mark, 'mirror-icon');
+      icon.style.setProperty('--icon-color', meta.color);
       const details = element('div', '');
+      const title = link('', `${m.path}/`);
+      title.append(element('strong', m.name));
       details.append(
-        element('strong', m.name),
-        element('small', m.description),
+        title,
+        element(
+          'small',
+          meta.label === m.name ? '校园网联合镜像站' : meta.label,
+        ),
       );
       name.append(icon, details);
       cells[0].append(name);
-      cells[1].append(
-        element(
-          'span',
-          statusLabel(m.status),
-          `status ${['success', 'syncing', 'failed'].includes(m.status) ? m.status : 'unknown'}`,
-        ),
-      );
-      cells[2].className = 'mono';
-      cells[2].textContent = m.size === 'unknown' ? '—' : m.size;
-      cells[3].className = 'date-cell';
-      cells[3].append(
-        element('span', formatDate(m.last_update)),
-        element('small', `下次：${formatDate(m.next_schedule)}`),
-      );
-      if (meta) {
-        const link = document.createElement('a');
-        link.className = 'help-link';
-        link.href = `/docs/${meta.slug}/`;
-        link.textContent = '指南 ↗';
-        link.setAttribute('aria-label', `${m.name} 使用帮助`);
-        cells[4].append(link);
-      } else cells[4].textContent = '—';
+      cells[1].textContent = meta.category;
+      const visit = link('访问 ↗', `${m.path}/`);
+      visit.setAttribute('aria-label', `访问 ${m.name}`);
+      cells[2].append(visit);
+      if (meta.slug) cells[3].append(link('指南 ↗', `/docs/${meta.slug}/`));
+      else cells[3].textContent = '—';
       return row;
     }),
   );
@@ -83,38 +76,53 @@ function render() {
 }
 async function load() {
   refresh.disabled = true;
-  message.textContent = '正在读取镜像数据…';
+  message.textContent = '正在读取 CERNET 镜像目录…';
   try {
     const response = await fetch('/mirrors.json', {
       cache: 'no-store',
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(12000),
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    mirrors = parseMirrors(await response.json());
+    if (!response.ok) throw new Error('Feed unavailable');
+    const feed: MirrorFeed = await response.json();
+    if (
+      !Array.isArray(feed.mirrors) ||
+      !feed.mirrors.every(
+        (m) =>
+          typeof m.name === 'string' &&
+          typeof m.path === 'string' &&
+          validRepoPath(m.path),
+      )
+    )
+      throw new Error('Invalid feed');
+    mirrors = feed.mirrors;
     render();
+    document.querySelector('#initial-error')?.remove();
     document.querySelector<HTMLElement>('#mirror-controls')!.hidden = false;
-    message.textContent = '同步记录供参考 · 请留意最近更新时间';
+    message.textContent = feed.stale
+      ? '上游暂时不可用，展示缓存目录'
+      : '目录来自 CERNET · 文件由各高校镜像站提供';
   } catch {
-    message.textContent = '数据刷新失败，保留上次数据。请重试。';
+    const initial = document.querySelector('#initial-error');
+    if (initial)
+      initial.textContent = '镜像目录暂时不可用，请刷新重试或访问 CERNET。';
+    message.textContent = '目录刷新失败，保留当前列表。请重试。';
   } finally {
     refresh.hidden = false;
     refresh.disabled = false;
   }
 }
 input.addEventListener('input', render);
-select.addEventListener('change', render);
 buttons.forEach((button) =>
   button.addEventListener('click', () => {
     category = button.dataset.category ?? '';
-    buttons.forEach((item) =>
-      item.setAttribute('aria-pressed', String(item === button)),
+    buttons.forEach((b) =>
+      b.setAttribute('aria-pressed', String(b === button)),
     );
     render();
   }),
 );
 document.querySelector('#clear-filters')!.addEventListener('click', () => {
   input.value = '';
-  select.value = '';
   buttons[0].click();
   input.focus();
 });

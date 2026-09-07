@@ -2,17 +2,17 @@
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import MirrorList from '../components/MirrorList.astro';
-const [posts, help] = await Promise.all([
-  getCollection('posts'),
-  getCollection('help'),
+const [blog, docs] = await Promise.all([
+  getCollection('blog'),
+  getCollection('docs'),
 ]);
-const latestPosts = posts
+const latestBlog = blog
   .sort(
     (a, b) =>
       b.data.date.getTime() - a.data.date.getTime() || a.id.localeCompare(b.id),
   )
   .slice(0, 3);
-const featuredHelp = help
+const featuredDocs = docs
   .filter((entry) => entry.data.featured)
   .sort(
     (a, b) =>
@@ -34,7 +34,7 @@ const featuredHelp = help
       </p><div class="hero-actions">
         <a href="#mirrors" class="button primary"
           >探索镜像 <span aria-hidden="true">↓</span></a
-        ><a href="/docs/" class="hero-help">第一次使用？查看帮助 ↗</a>
+        ><a href="/docs/" class="hero-docs">第一次使用？查看帮助 ↗</a>
       </div>
     </div>
     <div class="hero-art" aria-hidden="true">
@@ -70,7 +70,7 @@ const featuredHelp = help
           >查看使用帮助 <span>↗</span></a
         ><div class="popular-links">
           {
-            featuredHelp.map((entry) => (
+            featuredDocs.map((entry) => (
               <a href={`/docs/${entry.id}/`}>
                 {entry.data.featured!.label} <span>→</span>
               </a>
@@ -83,18 +83,21 @@ const featuredHelp = help
           <h2>镜像站动态</h2><a href="/blog/" aria-label="查看全部动态">↗</a>
         </div>
         {
-          latestPosts.map((post) => (
-            <a class="news-item" href={`/blog/${post.id}/`}>
-              <time datetime={post.data.date.toISOString().slice(0, 10)}>
-                {post.data.date.toISOString().slice(0, 10).replaceAll('-', '.')}{' '}
-                {post.data.category && <span>{post.data.category}</span>}
+          latestBlog.map((entry) => (
+            <a class="news-item" href={`/blog/${entry.id}/`}>
+              <time datetime={entry.data.date.toISOString().slice(0, 10)}>
+                {entry.data.date
+                  .toISOString()
+                  .slice(0, 10)
+                  .replaceAll('-', '.')}{' '}
+                {entry.data.category && <span>{entry.data.category}</span>}
               </time>
-              <h3>{post.data.title}</h3>
-              {post.data.description && <p>{post.data.description}</p>}
+              <h3>{entry.data.title}</h3>
+              {entry.data.description && <p>{entry.data.description}</p>}
             </a>
           ))
         }
-        {latestPosts.length === 0 && <p>暂无动态，敬请关注。</p>}
+        {latestBlog.length === 0 && <p>暂无动态，敬请关注。</p>}
       </section>
       <section class="sidebar-section community-card">
         <span class="eyebrow">BUILT IN THE OPEN</span><h2>

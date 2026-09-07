@@ -1,104 +1,99 @@
+export const CERNET_ORIGIN = 'https://mirrors.cernet.edu.cn';
+export const CERNET_FEED = `${CERNET_ORIGIN}/static/json/legacy/cernet.json`;
+export const RESERVED = new Set([
+  'api',
+  'docs',
+  'blog',
+  'about',
+  '_astro',
+  '_image',
+  'mirrors.json',
+  'favicon.svg',
+  '404',
+  'robots.txt',
+]);
 export interface Mirror {
   name: string;
-  description: string;
-  status: string;
-  size: string;
-  last_update: string;
-  next_schedule: string;
+  path: string;
 }
-export const catalog: Record<
-  string,
-  { slug: string; category: string; mark: string; color: string }
-> = {
-  Ubuntu: {
-    slug: 'ubuntu',
-    category: 'Linux 发行版',
-    mark: 'U',
-    color: '#d65a30',
-  },
-  CentOS: {
-    slug: 'centos',
-    category: 'Linux 发行版',
-    mark: 'C',
-    color: '#8663a5',
-  },
-  Debian: {
-    slug: 'debian',
-    category: 'Linux 发行版',
-    mark: 'D',
-    color: '#c34764',
-  },
-  Fedora: {
-    slug: 'fedora',
-    category: 'Linux 发行版',
-    mark: 'f',
-    color: '#3c73aa',
-  },
-  'Arch Linux': {
-    slug: 'arch-linux',
-    category: 'Linux 发行版',
-    mark: 'A',
-    color: '#298ab2',
-  },
-  Elvish: { slug: 'elvish', category: '开发工具', mark: 'E', color: '#587f6d' },
-  'Node.js': {
-    slug: 'nodejs',
-    category: '开发工具',
-    mark: 'N',
-    color: '#618944',
-  },
-  Python: {
-    slug: 'python',
-    category: '开发工具',
-    mark: 'Py',
-    color: '#b18a26',
-  },
-};
-export function statusLabel(status: string) {
+export interface MirrorFeed {
+  mirrors: Mirror[];
+  fetchedAt: string;
+  sourceUpdatedAt: string | null;
+  stale: boolean;
+}
+export function validRepoPath(path: string): boolean {
   return (
-    (
-      { success: '同步完成', syncing: '同步中', failed: '同步失败' } as Record<
-        string,
-        string
-      >
-    )[status] ?? '未知状态'
+    /^\/[A-Za-z0-9][A-Za-z0-9._+@/-]*$/.test(path) &&
+    path
+      .split('/')
+      .slice(1)
+      .every((part) => part !== '' && part !== '.' && part !== '..') &&
+    !RESERVED.has(path.split('/')[1])
   );
 }
-// Normalize Go timestamps for Safari; always display the feed in Asia/Shanghai.
-export function formatDate(value: string) {
-  if (!value || value.startsWith('0001-')) return '暂无记录';
-  const date = new Date(
-    value.replace(' ', 'T').replace(/ ([+-]\d{2})(\d{2})$/, '$1:$2'),
-  );
-  if (Number.isNaN(date.getTime())) return '暂无记录';
-  return new Intl.DateTimeFormat('zh-CN', {
-    timeZone: 'Asia/Shanghai',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
-    .format(date)
-    .replaceAll('/', '-');
-}
-export function parseMirrors(value: unknown): Mirror[] {
+export function parseCernet(value: unknown): Mirror[] {
   if (
-    !Array.isArray(value) ||
-    !value.every(
-      (item) =>
-        item &&
-        ['name', 'status', 'size', 'last_update', 'next_schedule'].every(
-          (key) => typeof item[key] === 'string',
-        ) &&
-        (item.description === undefined ||
-          typeof item.description === 'string'),
-    )
+    !value ||
+    typeof value !== 'object' ||
+    !('mirrors' in value) ||
+    !Array.isArray(value.mirrors) ||
+    !value.mirrors.length
   )
-    throw new Error('Invalid mirror feed');
-  return value.map((item) => ({
-    ...item,
-    description: item.description ?? '',
-  }));
+    throw new Error('Invalid CERNET feed');
+  const seen = new Set<string>();
+  const result: Mirror[] = [];
+  for (const item of value.mirrors) {
+    if (
+      !item ||
+      typeof item.cname !== 'string' ||
+      typeof item.url !== 'string' ||
+      !item.cname.trim()
+    )
+      throw new Error('Invalid repository');
+    if (!validRepoPath(item.url) || item.disable === true || seen.has(item.url))
+      continue;
+    seen.add(item.url);
+    result.push({ name: item.cname, path: item.url });
+  }
+  if (!result.length) throw new Error('Empty CERNET feed');
+  return result.sort((a, b) => a.name.localeCompare(b.name, 'en'));
+}
+export interface MirrorMetadata {
+  label: string;
+  category: string;
+  mark: string;
+  color: string;
+  slug: string;
+}
+export function mirrorMeta(
+  mirror: Mirror,
+  docs: Record<string, MirrorMetadata>,
+) {
+  const meta = docs[mirror.path.slice(1)];
+  return {
+    label: meta ? `${meta.label} · ${mirror.name}` : mirror.name,
+    category: meta?.category ?? '其他镜像',
+    mark: meta?.mark ?? mirror.name.slice(0, 2).toUpperCase(),
+    color: meta?.color ?? '#587f6d',
+    slug: meta?.slug,
+  };
+}
+export function redirectTarget(url: URL, mirrors: Mirror[]): string | null {
+  let path: string;
+  try {
+    path = decodeURIComponent(url.pathname);
+  } catch {
+    return null;
+  }
+  if (
+    /[\\\x00-\x1f\x7f]/.test(path) ||
+    path.includes('%') ||
+    path.split('/').some((part) => part === '.' || part === '..') ||
+    RESERVED.has(path.split('/')[1])
+  )
+    return null;
+  if (!mirrors.some((m) => path === m.path || path.startsWith(m.path + '/')))
+    return null;
+  return CERNET_ORIGIN + url.pathname + url.search;
 }

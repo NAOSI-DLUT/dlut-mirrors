@@ -1,32 +1,43 @@
 ---
-import data from '../../public/mirrors.json';
-import { catalog, formatDate, parseMirrors, statusLabel } from '../lib/mirrors';
-const mirrors = parseMirrors(data);
+import { getCollection } from 'astro:content';
+import { mirrorDocs } from '../lib/docs-metadata';
+const metadata = mirrorDocs(await getCollection('docs'));
+const categories = [
+  '全部镜像',
+  ...new Set([
+    ...Object.values(metadata).map((doc) => doc.category),
+    '其他镜像',
+  ]),
+];
 ---
 
-<section class="mirror-panel panel" aria-labelledby="mirror-heading">
+<section
+  data-mirror-docs={JSON.stringify(metadata)}
+  class="mirror-panel panel"
+  aria-labelledby="mirror-heading"
+>
   <div class="panel-heading">
     <div>
       <span class="eyebrow">EXPLORE THE OPEN SOURCE</span><h2
         id="mirror-heading"
       >
-        镜像列表 <span class="count" id="mirror-count">{mirrors.length}</span>
+        镜像列表 <span class="count" id="mirror-count">—</span>
       </h2>
     </div><button id="refresh" class="text-button" hidden>↻ 刷新数据</button>
   </div>
   <div id="mirror-controls" hidden>
-    <label class="search-field" for="mirror-search">
-      <span aria-hidden="true">⌕</span><input
+    <label class="search-field" for="mirror-search"
+      ><span aria-hidden="true">⌕</span><input
         id="mirror-search"
         type="search"
-        placeholder="搜索镜像名称或描述…"
+        placeholder="搜索 CERNET 镜像名称…"
         aria-label="搜索镜像"
-      /><kbd aria-hidden="true">/</kbd>
-    </label>
+      /><kbd aria-hidden="true">/</kbd></label
+    >
     <div class="filter-row">
       <div class="category-filters" role="group" aria-label="镜像分类">
         {
-          ['全部镜像', 'Linux 发行版', '开发工具'].map((name, i) => (
+          categories.map((name, i) => (
             <button
               data-category={i === 0 ? '' : name}
               aria-pressed={i === 0 ? 'true' : 'false'}
@@ -35,90 +46,20 @@ const mirrors = parseMirrors(data);
             </button>
           ))
         }
-      </div><select id="status-filter" aria-label="同步状态"
-        ><option value="">所有状态</option><option value="success"
-          >同步完成</option
-        ><option value="syncing">同步中</option><option value="failed"
-          >同步失败</option
-        ><option value="unknown">未知状态</option></select
-      >
+      </div><span class="routing-label">CERNET 智能调度</span>
     </div>
   </div>
-  <div class="table-scroll">
+  <div class="table-scroll mirror-scroll">
     <table>
-      <caption class="sr-only">镜像同步状态，时间均为北京时间</caption><thead
+      <caption class="sr-only"
+        >CERNET 仓库目录，访问时自动选择高校镜像站</caption
+      ><thead
         ><tr
-          ><th scope="col">镜像名称</th><th scope="col">同步状态</th><th
-            scope="col">大小</th
-          ><th scope="col">最近更新 <span class="timezone">UTC+8</span></th><th
-            scope="col">帮助</th
-          ></tr
+          ><th scope="col">镜像名称</th><th scope="col">分类</th><th scope="col"
+            >访问</th
+          ><th scope="col">帮助</th></tr
         ></thead
-      ><tbody id="mirror-rows"
-        >{
-          mirrors.map((mirror) => {
-            const meta = catalog[mirror.name];
-            return (
-              <tr>
-                <>
-                  <td>
-                    <div class="mirror-name">
-                      <>
-                        <span
-                          class="mirror-icon"
-                          style={`--icon-color:${meta?.color ?? '#587f6d'}`}
-                        >
-                          {meta?.mark ?? mirror.name[0]}
-                        </span>
-                        <div>
-                          <>
-                            <strong>{mirror.name}</strong>
-                            <small>{mirror.description}</small>
-                          </>
-                        </div>
-                      </>
-                    </div>
-                  </td>
-                  <td>
-                    <span
-                      class:list={[
-                        'status',
-                        ['success', 'syncing', 'failed'].includes(mirror.status)
-                          ? mirror.status
-                          : 'unknown',
-                      ]}
-                    >
-                      {statusLabel(mirror.status)}
-                    </span>
-                  </td>
-                  <td class="mono">
-                    {mirror.size === 'unknown' ? '—' : mirror.size}
-                  </td>
-                  <td class="date-cell">
-                    <>
-                      <span>{formatDate(mirror.last_update)}</span>
-                      <small>下次：{formatDate(mirror.next_schedule)}</small>
-                    </>
-                  </td>
-                  <td>
-                    {meta ? (
-                      <a
-                        class="help-link"
-                        href={`/docs/${meta.slug}/`}
-                        aria-label={`${mirror.name} 使用帮助`}
-                      >
-                        指南 ↗
-                      </a>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                </>
-              </tr>
-            );
-          })
-        }</tbody
-      >
+      ><tbody id="mirror-rows"></tbody>
     </table>
   </div>
   <div id="empty-state" class="empty-state" hidden>
@@ -126,10 +67,22 @@ const mirrors = parseMirrors(data);
       试试其他关键词，或清除筛选条件。
     </p><button id="clear-filters" class="button secondary">清除筛选</button>
   </div>
+  <p id="initial-error" class="empty-state">
+    正在读取镜像目录… <a href="https://mirrors.cernet.edu.cn/"
+      >也可访问 CERNET ↗</a
+    >
+  </p>
   <div class="table-footer">
     <span id="feed-message" role="status" aria-live="polite"
-      >同步记录供参考 · 请留意最近更新时间</span
+      >目录来自 CERNET · 文件由各高校镜像站提供</span
     ><a href="/mirrors.json">查看 JSON ↗</a>
   </div>
+  <noscript
+    ><p class="table-footer">
+      请启用 JavaScript 查看本站目录，或<a href="https://mirrors.cernet.edu.cn/"
+        >前往 CERNET 搜索 ↗</a
+      >
+    </p></noscript
+  >
 </section>
 <script src="../lib/mirror-client.ts"></script>

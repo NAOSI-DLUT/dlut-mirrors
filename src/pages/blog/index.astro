@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-const posts = (await getCollection('posts')).sort(
+const blog = (await getCollection('blog')).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
 ---
@@ -13,13 +13,13 @@ const posts = (await getCollection('posts')).sort(
     </p>
   </section><div class="post-list">
     {
-      posts.map((post) => (
-        <a class="panel post-card" href={`/blog/${post.id}/`}>
+      blog.map((entry) => (
+        <a class="panel post-card" href={`/blog/${entry.id}/`}>
           <>
-            <time datetime={post.data.date.toISOString()}>
-              {post.data.date.toISOString().slice(0, 10)}
+            <time datetime={entry.data.date.toISOString()}>
+              {entry.data.date.toISOString().slice(0, 10)}
             </time>
-            <h2>{post.data.title}</h2>
+            <h2>{entry.data.title}</h2>
             <span>阅读全文 ↗</span>
           </>
         </a>

@@ -1,8 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import { catalog } from '../../lib/mirrors';
-const docs = await getCollection('help');
+import { docMetadata } from '../../lib/docs-metadata';
+const docs = await getCollection('docs');
 ---
 
 <Layout title="使用帮助"
@@ -15,9 +15,7 @@ const docs = await getCollection('help');
   </div><div class="docs-grid">
     {
       docs.map((doc) => {
-        const meta = Object.values(catalog).find(
-          (item) => item.slug === doc.id,
-        );
+        const meta = docMetadata(doc);
         return (
           <a class="panel doc-card" href={`/docs/${doc.id}/`}>
             <>

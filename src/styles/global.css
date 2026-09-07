@@ -217,7 +217,7 @@ p {
   border-color: #dae6d1;
   color: #4b7d36;
 }
-.hero-help {
+.hero-docs {
   font-size: 12px;
   color: #65735d;
 }
@@ -575,7 +575,7 @@ tbody tr:hover {
   color: #a5ab9c;
   margin-left: 4px;
 }
-.help-link {
+.docs-link {
   color: #507d37;
   font-size: 11px;
 }
@@ -1067,7 +1067,7 @@ tbody tr:hover {
   .hero-actions {
     gap: 18px;
   }
-  .hero-help {
+  .hero-docs {
     font-size: 11px;
   }
   .hero .button {
@@ -1234,4 +1234,33 @@ tbody tr:hover {
   margin-top: 18px;
   padding-top: 18px;
   border-top: 1px solid var(--line);
+}
+
+.mirror-scroll {
+  max-height: 680px;
+}
+.mirror-scroll thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.mirror-scroll .mirror-name small {
+  max-width: 240px;
+}
+.mirror-scroll .mirror-name strong {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.routing-label {
+  font-size: 10px;
+  color: var(--green);
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .filter-row {
+    flex-wrap: wrap;
+  }
+  .mirror-scroll table {
+    min-width: 520px;
+  }
 }

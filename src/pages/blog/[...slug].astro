@@ -2,21 +2,22 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 export async function getStaticPaths() {
-  return (await getCollection('posts')).map((post) => ({
-    params: { slug: post.id },
-    props: { post },
+  return (await getCollection('blog')).map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
   }));
 }
-const { post } = Astro.props;
-const { Content } = await render(post);
+const { entry } = Astro.props;
+const { Content } = await render(entry);
 ---
 
-<Layout title={post.data.title}
+<Layout title={entry.data.title}
   ><div class="breadcrumb">
-    <a href="/blog/">镜像站动态</a><span>/</span><span>{post.data.title}</span>
+    <a href="/blog/">镜像站动态</a><span>/</span><span>{entry.data.title}</span>
   </div><article class="panel article standalone">
-    <span class="eyebrow">{post.data.date.toISOString().slice(0, 10)}</span><h1>
-      {post.data.title}
+    <span class="eyebrow">{entry.data.date.toISOString().slice(0, 10)}</span><h1
+    >
+      {entry.data.title}
     </h1><div class="prose"><Content /></div><div class="article-bottom">
       <a href="/blog/">← 全部动态</a>
     </div>
