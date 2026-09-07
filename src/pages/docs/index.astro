@@ -1,0 +1,37 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { catalog } from '../../lib/mirrors';
+const docs = await getCollection('help');
+---
+
+<Layout title="使用帮助"
+  ><section class="page-heading">
+    <span class="eyebrow">MIRROR HANDBOOK</span><h1>从一份指南开始。</h1><p>
+      选择你的发行版或开发工具，查看镜像配置方法。
+    </p>
+  </section><div class="service-notice">
+    <p>请按系统版本选择配置方法，使用前确认镜像服务可用，并备份原有配置。</p>
+  </div><div class="docs-grid">
+    {
+      docs.map((doc) => {
+        const meta = Object.values(catalog).find(
+          (item) => item.slug === doc.id,
+        );
+        return (
+          <a class="panel doc-card" href={`/docs/${doc.id}/`}>
+            <>
+              <span class="mirror-icon" style={`--icon-color:${meta?.color}`}>
+                {meta?.mark}
+              </span>
+              <span class="eyebrow">{meta?.category}</span>
+              <h2>{doc.data.title}</h2>
+              <p>{doc.data.description}</p>
+              <span class="green">阅读指南 ↗</span>
+            </>
+          </a>
+        );
+      })
+    }
+  </div></Layout
+>

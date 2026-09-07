@@ -1,6 +1,9 @@
 ---
 title: Node.js 镜像
 description: Node.js 相关镜像与包管理器配置说明。
+featured:
+  label: Node.js / npm
+  order: 3
 ---
 
 上游地址：rsync://mirrors.nodejs.org/nodejs/

@@ -1,0 +1,29 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+const posts = (await getCollection('posts')).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+---
+
+<Layout title="镜像站动态"
+  ><section class="page-heading">
+    <span class="eyebrow">NEWS & NOTES</span><h1>镜像站动态</h1><p>
+      使用指南、站点记录与开源分享。
+    </p>
+  </section><div class="post-list">
+    {
+      posts.map((post) => (
+        <a class="panel post-card" href={`/blog/${post.id}/`}>
+          <>
+            <time datetime={post.data.date.toISOString()}>
+              {post.data.date.toISOString().slice(0, 10)}
+            </time>
+            <h2>{post.data.title}</h2>
+            <span>阅读全文 ↗</span>
+          </>
+        </a>
+      ))
+    }
+  </div></Layout
+>

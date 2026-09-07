@@ -1,6 +1,9 @@
 ---
 title: Python 镜像
 description: Python 相关镜像与包管理器配置说明。
+featured:
+  label: Python / pip
+  order: 2
 ---
 
 上游地址：rsync://mirrors.python.org/pypi/

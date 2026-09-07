@@ -1,0 +1,120 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import MirrorList from '../components/MirrorList.astro';
+const [posts, help] = await Promise.all([
+  getCollection('posts'),
+  getCollection('help'),
+]);
+const latestPosts = posts
+  .sort(
+    (a, b) =>
+      b.data.date.getTime() - a.data.date.getTime() || a.id.localeCompare(b.id),
+  )
+  .slice(0, 3);
+const featuredHelp = help
+  .filter((entry) => entry.data.featured)
+  .sort(
+    (a, b) =>
+      a.data.featured!.order - b.data.featured!.order ||
+      a.id.localeCompare(b.id),
+  )
+  .slice(0, 3);
+---
+
+<Layout>
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="hero-label"><span></span> OPEN SOURCE, CLOSER TO YOU</div><h1>
+        让开源，<br />离你<span class="green">更近一步。</span>
+      </h1><p>
+        连接校园与开源世界。<br
+          class="mobile-break"
+        />在这里，找到你需要的发行版与开发工具。
+      </p><div class="hero-actions">
+        <a href="#mirrors" class="button primary"
+          >探索镜像 <span aria-hidden="true">↓</span></a
+        ><a href="/docs/" class="hero-help">第一次使用？查看帮助 ↗</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div
+        class="orbit orbit-three"
+      >
+      </div><span class="orbit-point point-one"></span><span
+        class="orbit-point point-two"></span><div class="server-stack">
+        <div class="server-unit"><span></span><span></span><b>01</b></div><div
+          class="server-unit"
+        >
+          <span></span><span></span><b>10</b>
+        </div><div class="server-unit">
+          <span></span><span></span><b>11</b>
+        </div><div class="server-base"></div>
+      </div><span class="art-caption">&lt; / &gt; &nbsp; SHARING IS CARING</span
+      ><span class="art-tag">自由 · 开放 · 共享</span>
+    </div>
+  </section>
+  <div class="service-notice">
+    <span class="notice-icon" aria-hidden="true">i</span><p>
+      <strong>社团运营</strong><span
+        >本站由大连理工大学网络与开源协会运营，非大连理工大学官方运营的镜像站。</span
+      >
+    </p><a href="/blog/hello/">了解详情 ↗</a>
+  </div>
+  <div class="home-grid" id="mirrors">
+    <MirrorList /><aside class="home-sidebar">
+      <section class="panel quick-start">
+        <span class="eyebrow">GET STARTED</span><h2>换个源，轻松开始。</h2><p>
+          找到对应的镜像指南，<br />几步完成你的开发环境配置。
+        </p><a href="/docs/" class="button secondary"
+          >查看使用帮助 <span>↗</span></a
+        ><div class="popular-links">
+          {
+            featuredHelp.map((entry) => (
+              <a href={`/docs/${entry.id}/`}>
+                {entry.data.featured!.label} <span>→</span>
+              </a>
+            ))
+          }
+        </div>
+      </section>
+      <section class="panel sidebar-section">
+        <div class="section-title">
+          <h2>镜像站动态</h2><a href="/blog/" aria-label="查看全部动态">↗</a>
+        </div>
+        {
+          latestPosts.map((post) => (
+            <a class="news-item" href={`/blog/${post.id}/`}>
+              <time datetime={post.data.date.toISOString().slice(0, 10)}>
+                {post.data.date.toISOString().slice(0, 10).replaceAll('-', '.')}{' '}
+                {post.data.category && <span>{post.data.category}</span>}
+              </time>
+              <h3>{post.data.title}</h3>
+              {post.data.description && <p>{post.data.description}</p>}
+            </a>
+          ))
+        }
+        {latestPosts.length === 0 && <p>暂无动态，敬请关注。</p>}
+      </section>
+      <section class="sidebar-section community-card">
+        <span class="eyebrow">BUILT IN THE OPEN</span><h2>
+          一起，让开源更好。
+        </h2><p>
+          发现问题，或有新的镜像建议？<br />欢迎在 GitHub 参与项目讨论。
+        </p><a href="https://github.com/NAOSI-DLUT/dlut-mirrors/issues"
+          >问题反馈与建议 ↗</a
+        ><div class="community-divider"></div><a href="https://naosi.org/"
+          >认识 NAOSI ↗</a
+        >
+      </section>
+    </aside>
+  </div>
+  <section class="friends">
+    <span>连接更多开源社区</span><a href="https://mirrors.tuna.tsinghua.edu.cn/"
+      >清华大学 TUNA ↗</a
+    ><a href="https://mirrors.ustc.edu.cn/">中国科学技术大学 USTC ↗</a><a
+      href="https://mirror.sjtu.edu.cn/">上海交通大学 SJTUG ↗</a
+    >
+    <a href="https://mirrors.jlu.edu.cn/">吉林大学 JLU ↗</a>
+  </section>
+</Layout>

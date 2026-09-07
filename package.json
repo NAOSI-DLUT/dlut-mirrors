@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "dlut-mirrors",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -7,11 +7,22 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check",
+    "test": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.38.5",
-    "astro": "^6.2.2",
-    "sharp": "^0.34.5"
+    "astro": "^7.3.1",
+    "zod": "^4.5.4"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript": "^6.0.3"
   }
 }

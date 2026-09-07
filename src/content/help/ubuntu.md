@@ -1,6 +1,9 @@
 ---
 title: Ubuntu 镜像
 description: Ubuntu 镜像源配置与使用说明。
+featured:
+  label: Ubuntu
+  order: 1
 ---
 
 上游地址：rsync://mirrors.ubuntu.com/ubuntu/

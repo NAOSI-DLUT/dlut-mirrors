@@ -1,0 +1,78 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+export async function getStaticPaths() {
+  return (await getCollection('help')).map((doc) => ({
+    params: { slug: doc.id },
+    props: { doc },
+  }));
+}
+const { doc } = Astro.props;
+const { Content, headings } = await render(doc);
+const docs = await getCollection('help');
+---
+
+<Layout title={doc.data.title} description={doc.data.description}>
+  <div class="breadcrumb">
+    <a href="/">镜像站</a><span>/</span><a href="/docs/">使用帮助</a><span
+      >/</span
+    ><span>{doc.data.title}</span>
+  </div>
+  <div class="document-grid">
+    <aside class="doc-nav panel">
+      <h2>镜像使用帮助</h2><nav aria-label="帮助文档">
+        {
+          docs.map((item) => (
+            <a
+              href={`/docs/${item.id}/`}
+              aria-current={item.id === doc.id ? 'page' : undefined}
+            >
+              {item.data.title}
+            </a>
+          ))
+        }
+      </nav>
+    </aside><article class="panel article">
+      <span class="eyebrow">MIRROR HANDBOOK</span><h1>{doc.data.title}</h1><p
+        class="article-description"
+      >
+        {doc.data.description}
+      </p><div class="doc-caution">
+        配置前请确认服务与版本适用性，并备份原有软件源配置。
+      </div><div class="prose"><Content /></div><div class="article-bottom">
+        <a href="/docs/">← 全部指南</a><a
+          href="https://github.com/NAOSI-DLUT/dlut-mirrors/issues"
+          >反馈文档问题 ↗</a
+        >
+      </div>
+    </article><aside class="toc">
+      <h2>本页内容</h2>{
+        headings
+          .filter((h) => h.depth === 2)
+          .map((h) => <a href={`#${h.slug}`}>{h.text}</a>)
+      }
+    </aside>
+  </div>
+</Layout>
+<script>
+  document.querySelectorAll('pre').forEach((pre) => {
+    const button = document.createElement('button');
+    button.className = 'copy-button';
+    button.textContent = '复制';
+    button.setAttribute('aria-label', '复制代码');
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(
+          pre.querySelector('code')?.textContent ?? '',
+        );
+        button.textContent = '已复制';
+      } catch {
+        button.textContent = '复制失败，请手动选择';
+      }
+      setTimeout(() => {
+        button.textContent = '复制';
+      }, 2000);
+    });
+    pre.append(button);
+  });
+</script>

@@ -1,175 +1,135 @@
-<div class="mirror-list">
-  <div id="mirror-table-container">
-    <p class="text-gray-500">加载中...</p>
+---
+import data from '../../public/mirrors.json';
+import { catalog, formatDate, parseMirrors, statusLabel } from '../lib/mirrors';
+const mirrors = parseMirrors(data);
+---
+
+<section class="mirror-panel panel" aria-labelledby="mirror-heading">
+  <div class="panel-heading">
+    <div>
+      <span class="eyebrow">EXPLORE THE OPEN SOURCE</span><h2
+        id="mirror-heading"
+      >
+        镜像列表 <span class="count" id="mirror-count">{mirrors.length}</span>
+      </h2>
+    </div><button id="refresh" class="text-button" hidden>↻ 刷新数据</button>
   </div>
-</div>
-
-<script>
-  function getStatusBadge(status: string): { color: string; text: string } {
-    const statusMap: Record<string, { color: string; text: string }> = {
-      success: { color: "status-success", text: "完成" },
-      syncing: { color: "status-syncing", text: "同步中" },
-      failed: { color: "status-failed", text: "失败" },
-    };
-    return statusMap[status] || { color: "status-badge", text: "未知" };
-  }
-
-  function formatDate(dateString: string): string {
-    if (!dateString || dateString.includes("0001")) return "-";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("zh-CN");
-    } catch {
-      return dateString;
-    }
-  }
-
-  async function loadMirrors() {
-    const container = document.getElementById("mirror-table-container");
-    if (!container) return;
-
-    try {
-      const response = await fetch("/mirrors.json");
-      const mirrors = await response.json();
-
-      container.innerHTML = `
-        <div class="overflow-x-auto">
-          <table class="border-collapse">
-            <thead class="bg-gray-100">
+  <div id="mirror-controls" hidden>
+    <label class="search-field" for="mirror-search">
+      <span aria-hidden="true">⌕</span><input
+        id="mirror-search"
+        type="search"
+        placeholder="搜索镜像名称或描述…"
+        aria-label="搜索镜像"
+      /><kbd aria-hidden="true">/</kbd>
+    </label>
+    <div class="filter-row">
+      <div class="category-filters" role="group" aria-label="镜像分类">
+        {
+          ['全部镜像', 'Linux 发行版', '开发工具'].map((name, i) => (
+            <button
+              data-category={i === 0 ? '' : name}
+              aria-pressed={i === 0 ? 'true' : 'false'}
+            >
+              {name}
+            </button>
+          ))
+        }
+      </div><select id="status-filter" aria-label="同步状态"
+        ><option value="">所有状态</option><option value="success"
+          >同步完成</option
+        ><option value="syncing">同步中</option><option value="failed"
+          >同步失败</option
+        ><option value="unknown">未知状态</option></select
+      >
+    </div>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <caption class="sr-only">镜像同步状态，时间均为北京时间</caption><thead
+        ><tr
+          ><th scope="col">镜像名称</th><th scope="col">同步状态</th><th
+            scope="col">大小</th
+          ><th scope="col">最近更新 <span class="timezone">UTC+8</span></th><th
+            scope="col">帮助</th
+          ></tr
+        ></thead
+      ><tbody id="mirror-rows"
+        >{
+          mirrors.map((mirror) => {
+            const meta = catalog[mirror.name];
+            return (
               <tr>
-                <th class="border border-gray-300 px-4 py-2 text-left">名称</th>
-                <th class="border border-gray-300 px-4 py-2 text-left">描述</th>
-                <th class="border border-gray-300 px-4 py-2 text-center">状态</th>
-                <th class="border border-gray-300 px-4 py-2 text-left">大小</th>
-                <th class="border border-gray-300 px-4 py-2 text-left">最后更新</th>
-                <th class="border border-gray-300 px-4 py-2 text-left">下一次同步</th>
+                <>
+                  <td>
+                    <div class="mirror-name">
+                      <>
+                        <span
+                          class="mirror-icon"
+                          style={`--icon-color:${meta?.color ?? '#587f6d'}`}
+                        >
+                          {meta?.mark ?? mirror.name[0]}
+                        </span>
+                        <div>
+                          <>
+                            <strong>{mirror.name}</strong>
+                            <small>{mirror.description}</small>
+                          </>
+                        </div>
+                      </>
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      class:list={[
+                        'status',
+                        ['success', 'syncing', 'failed'].includes(mirror.status)
+                          ? mirror.status
+                          : 'unknown',
+                      ]}
+                    >
+                      {statusLabel(mirror.status)}
+                    </span>
+                  </td>
+                  <td class="mono">
+                    {mirror.size === 'unknown' ? '—' : mirror.size}
+                  </td>
+                  <td class="date-cell">
+                    <>
+                      <span>{formatDate(mirror.last_update)}</span>
+                      <small>下次：{formatDate(mirror.next_schedule)}</small>
+                    </>
+                  </td>
+                  <td>
+                    {meta ? (
+                      <a
+                        class="help-link"
+                        href={`/docs/${meta.slug}/`}
+                        aria-label={`${mirror.name} 使用帮助`}
+                      >
+                        指南 ↗
+                      </a>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                </>
               </tr>
-            </thead>
-            <tbody>
-              ${mirrors
-                .map((mirror: any) => {
-                  const statusBadge = getStatusBadge(mirror.status);
-                  return `
-                    <tr class="hover:bg-gray-50 transition">
-                      <td class="border border-gray-300 px-4 py-2 font-semibold">${mirror.name}</td>
-                      <td class="border border-gray-300 px-4 py-2 text-sm">${mirror.description || "-"}</td>
-                      <td class="border border-gray-300 px-4 py-2 text-center">
-                        <span class="status-badge ${statusBadge.color}">${statusBadge.text}</span>
-                      </td>
-                      <td class="border border-gray-300 px-4 py-2 text-sm">${mirror.size}</td>
-                      <td class="border border-gray-300 px-4 py-2 text-sm text-gray-600">${formatDate(mirror.last_update)}</td>
-                      <td class="border border-gray-300 px-4 py-2 text-sm text-gray-600">${formatDate(mirror.next_schedule)}</td>
-                    </tr>
-                  `;
-                })
-                .join("")}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (err) {
-      container.innerHTML = `<p class="text-red-500">加载镜像列表失败，请刷新重试。</p>`;
-      console.error("Failed to load mirrors:", err);
-    }
-  }
-
-  loadMirrors();
-</script>
-
-<style>
-  .mirror-list {
-    margin: 2rem 0;
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 0.15em 0.5em;
-    border-radius: 0.25rem;
-    font-size: 0.85em;
-    font-weight: 500;
-  }
-
-  .status-success {
-    background-color: #d1fae5;
-    color: #065f46;
-  }
-
-  .status-syncing {
-    background-color: #fef3c7;
-    color: #92400e;
-  }
-
-  .status-failed {
-    background-color: #fee2e2;
-    color: #991b1b;
-  }
-
-  .overflow-x-auto {
-    overflow-x: auto;
-  }
-
-  .border-collapse {
-    border-collapse: collapse;
-    width: 100%;
-  }
-
-  .border {
-    border-width: 1px;
-  }
-
-  .border-gray-300 {
-    border-color: #d1d5db;
-  }
-
-  .px-4 {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  .py-2 {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-
-  .text-left {
-    text-align: left;
-  }
-
-  .text-center {
-    text-align: center;
-  }
-
-  .text-sm {
-    font-size: 0.875rem;
-  }
-
-  .text-gray-600 {
-    color: #4b5563;
-  }
-
-  .font-semibold {
-    font-weight: 600;
-  }
-
-  .bg-gray-100 {
-    background-color: #f3f4f6;
-  }
-
-  .hover\:bg-gray-50:hover {
-    background-color: #f9fafb;
-  }
-
-  .transition {
-    transition-property: background-color;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-  }
-
-  .text-gray-500 {
-    color: #6b7280;
-  }
-
-  .text-red-500 {
-    color: #ef4444;
-  }
-</style>
+            );
+          })
+        }</tbody
+      >
+    </table>
+  </div>
+  <div id="empty-state" class="empty-state" hidden>
+    <strong>没有找到匹配的镜像</strong><p>
+      试试其他关键词，或清除筛选条件。
+    </p><button id="clear-filters" class="button secondary">清除筛选</button>
+  </div>
+  <div class="table-footer">
+    <span id="feed-message" role="status" aria-live="polite"
+      >同步记录供参考 · 请留意最近更新时间</span
+    ><a href="/mirrors.json">查看 JSON ↗</a>
+  </div>
+</section>
+<script src="../lib/mirror-client.ts"></script>
