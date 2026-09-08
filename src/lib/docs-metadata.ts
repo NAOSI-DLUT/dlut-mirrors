@@ -8,6 +8,7 @@ export function docMetadata(doc: CollectionEntry<'docs'>): MirrorMetadata {
     mark: doc.data.mark ?? doc.data.title.slice(0, 2),
     color: doc.data.color,
     slug: doc.id,
+    icon: doc.data.icon ? `/icons/${doc.data.icon}.svg` : undefined,
   };
 }
 

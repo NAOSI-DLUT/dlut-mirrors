@@ -2,6 +2,7 @@ export const CERNET_ORIGIN = 'https://mirrors.cernet.edu.cn';
 export const CERNET_FEED = `${CERNET_ORIGIN}/static/json/legacy/cernet.json`;
 export const RESERVED = new Set([
   'api',
+  'icons',
   'docs',
   'blog',
   'about',
@@ -60,6 +61,7 @@ export function parseCernet(value: unknown): Mirror[] {
   return result.sort((a, b) => a.name.localeCompare(b.name, 'en'));
 }
 export interface MirrorMetadata {
+  icon?: string;
   label: string;
   category: string;
   mark: string;
@@ -77,6 +79,7 @@ export function mirrorMeta(
     mark: meta?.mark ?? mirror.name.slice(0, 2).toUpperCase(),
     color: meta?.color ?? '#587f6d',
     slug: meta?.slug,
+    icon: meta?.icon,
   };
 }
 export function redirectTarget(url: URL, mirrors: Mirror[]): string | null {

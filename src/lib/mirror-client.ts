@@ -47,6 +47,21 @@ function render() {
       const name = element('div', '', 'mirror-name');
       const icon = element('span', meta.mark, 'mirror-icon');
       icon.style.setProperty('--icon-color', meta.color);
+      icon.setAttribute('aria-hidden', 'true');
+      if (meta.icon) {
+        const logo = document.createElement('img');
+        logo.src = meta.icon;
+        logo.alt = '';
+        logo.width = 22;
+        logo.height = 22;
+        logo.loading = 'lazy';
+        logo.addEventListener(
+          'error',
+          () => icon.replaceChildren(document.createTextNode(meta.mark)),
+          { once: true },
+        );
+        icon.replaceChildren(logo);
+      }
       const details = element('div', '');
       const title = link('', `${m.path}/`);
       title.append(element('strong', m.name));

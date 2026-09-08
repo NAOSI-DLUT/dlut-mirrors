@@ -1,0 +1,38 @@
+---
+import type { MirrorMetadata } from '../lib/mirrors';
+interface Props {
+  meta: MirrorMetadata;
+}
+const { meta } = Astro.props;
+---
+
+<span
+  class="mirror-icon"
+  style={`--icon-color:${meta.color}`}
+  aria-hidden="true"
+>
+  {
+    meta.icon ? (
+      <img
+        src={meta.icon}
+        width="22"
+        height="22"
+        alt=""
+        loading="lazy"
+        data-fallback={meta.mark}
+      />
+    ) : (
+      meta.mark
+    )
+  }
+</span>
+<script>
+  document
+    .querySelectorAll<HTMLImageElement>('img[data-fallback]')
+    .forEach((img) => {
+      const fallback = () =>
+        img.replaceWith(document.createTextNode(img.dataset.fallback ?? ''));
+      img.addEventListener('error', fallback, { once: true });
+      if (img.complete && !img.naturalWidth) fallback();
+    });
+</script>

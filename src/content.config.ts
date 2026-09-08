@@ -12,6 +12,10 @@ export const collections = {
         .optional(),
       category: z.string().default('其他镜像'),
       mark: z.string().optional(),
+      icon: z
+        .string()
+        .regex(/^[a-z0-9]+$/)
+        .optional(),
       color: z
         .string()
         .regex(/^#[0-9a-fA-F]{6}$/)

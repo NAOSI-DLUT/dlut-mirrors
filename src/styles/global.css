@@ -517,6 +517,12 @@ tbody tr:hover {
   font-weight: 700;
   flex-shrink: 0;
 }
+.mirror-icon img {
+  display: block;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
 .mirror-name strong {
   font-size: 14px;
   font-weight: 600;
@@ -1247,7 +1253,13 @@ tbody tr:hover {
 .mirror-scroll .mirror-name small {
   max-width: 240px;
 }
-.mirror-scroll .mirror-name strong {
+.mirror-scroll .mirror-icon img {
+  display: block;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.mirror-name strong {
   overflow-wrap: anywhere;
   white-space: normal;
 }

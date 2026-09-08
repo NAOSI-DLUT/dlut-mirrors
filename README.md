@@ -58,7 +58,7 @@ featured:
   order: 2
 ```
 
-镜像帮助链接通过 `getCollection('docs')` 自动生成：默认以文档 ID 匹配 CERNET 仓库路径；名称不同或一篇文档对应多个仓库时，在 frontmatter 设置 `mirrors: [nodejs-release, npm]`。分类、图标和颜色通过 `category`、`mark`、`color` 设置，未填写时使用默认值。分类筛选同样从内容生成；同一仓库匹配多篇文档时构建报错，避免随机选择。删除文档后，对应指南链接也会在重新构建时移除。
+镜像帮助链接通过 `getCollection('docs')` 自动生成：默认以文档 ID 匹配 CERNET 仓库路径；名称不同或一篇文档对应多个仓库时，在 frontmatter 设置 `mirrors: [nodejs-release, npm]`。分类和颜色通过 `category`、`color` 设置。品牌图标使用 Simple Icons 的 slug，例如 `icon: ubuntu`；未设置图标时显示 `mark`，图片加载失败也会回退到文字标记。分类筛选同样从内容生成；同一仓库匹配多篇文档时构建报错，避免随机选择。删除文档后，对应指南链接也会在重新构建时移除。
 
 修改内容后需重新构建发布。运营说明位于 `/blog/hello/`，旧 `/about/`、`/blog/welcome/` 重定向到该文章。
 
@@ -73,3 +73,9 @@ Cloudflare 适配器已移除 Pages 部署支持，因此使用 Workers 承载 A
 - [CERNET 302 调度](https://github.com/mirrorz-org/mirrorz-302)
 
 NAOSI 是正式注册的学生社团，本站由社团自主运营，非学校官方运营。
+
+## 品牌图标
+
+图标来自 [Simple Icons](https://simpleicons.org/)（项目采用 CC0；品牌标识仍归各自权利人所有）。通过文档 frontmatter 的 `icon` 字段选择，构建时仅输出实际使用的 SVG 到 `/icons/`，不向浏览器发送完整图标库，不调用第三方图标 CDN。未知的图标 slug 会使构建失败，避免发布断图。
+
+帮助文档目前共 38 篇，包含发行版、开发工具、科学计算与镜像故障排查。各篇附参考资料；版本限定、协议差异和上游暂不可用的情况在正文中说明。
